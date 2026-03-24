@@ -1,1 +1,19 @@
-{\n  "name": "news-feeder-bot",\n  "version": "1.0.0",\n  "description": "A bot for fetching and managing news feeds",\n  "main": "index.js",\n  "scripts": {\n    "test": "echo 'Error: no test specified' && exit 1"\n  },\n  "dependencies": {\n    "axios": "^0.24.0",\n    "rss-parser": "^3.10.1",\n    "supabase-js": "^2.0.0",\n    "twitter-api-v2": "^1.8.1",\n    "cheerio": "^1.0.0-rc.10",\n    "node-cron": "^3.0.0",\n    "dotenv": "^10.0.0"\n  }\n}
+{
+  "name": "news-feeder-bot",
+  "version": "1.0.0",
+  "description": "A bot for fetching and managing news feeds",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo 'Error: no test specified' && exit 1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.4.0",
+    "node-cron": "^3.0.3",
+    "rss-parser": "^3.13.0",
+    "twitter-api-v2": "^1.17.0"
+  }
+}
