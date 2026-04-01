@@ -1,13 +1,15 @@
 const Parser = require('rss-parser');
 const parser = new Parser();
 
-// Verified working as of 2026-03-25. Reuters DNS dead, AP Breaking=404; replaced.
+// NOTE: NYT World and BBC World are intentionally excluded here — they are
+// already collected by geopoliticalCollector.js. Duplicating them causes the
+// same URL to arrive with two different categories; URL-based dedup retains
+// whichever collector wins the race, making the category non-deterministic.
+// This list keeps only security-specific feeds not present elsewhere.
 const SECURITY_FEEDS = [
-    { source: 'NYT World',      url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', source_weight: 0.28 },
-    { source: 'BBC Breaking',   url: 'http://feeds.bbci.co.uk/news/rss.xml',                   source_weight: 0.25 },
-    { source: 'CNN Breaking',   url: 'http://rss.cnn.com/rss/cnn_topstories.rss',              source_weight: 0.18 },
-    { source: 'Guardian World', url: 'https://www.theguardian.com/world/rss',                  source_weight: 0.18 },
-
+    { source: 'CNN Breaking',   url: 'http://rss.cnn.com/rss/cnn_topstories.rss',             source_weight: 0.18 },
+    { source: 'Guardian World', url: 'https://www.theguardian.com/world/rss',                 source_weight: 0.18 },
+    { source: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml',             source_weight: 0.20 },
 ];
 
 function detectSecurityEventType(title) {

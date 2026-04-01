@@ -9,6 +9,21 @@ const FINANCE_KEYWORDS = [
     'TCMB', 'Türkiye ekonomi', 'enflasyon', 'faiz', 'USDTRY',
 ];
 
+// Spam / low-quality content patterns — discard tweets matching any of these
+const SPAM_PATTERNS = [
+    /^RT\s/,                                      // retweet
+    /\b(follow|takip|airdrop|free token|win \d+)/i, // giveaway / promo spam
+    /https?:\/\/\S+\.(ly|gl|bit)\//i,            // link shortener spam
+];
+
+function isLowQuality(tweet) {
+    // Too short to carry actionable information
+    if (tweet.text.length < 40) return true;
+    // Matches any spam pattern
+    if (SPAM_PATTERNS.some(re => re.test(tweet.text))) return true;
+    return false;
+}
+
 async function searchFinanceNews() {
     if (!bearerToken) {
         console.warn('⚠️  TWITTER_BEARER_TOKEN not set, skipping Twitter collector.');
@@ -19,14 +34,16 @@ async function searchFinanceNews() {
     try {
         const query = FINANCE_KEYWORDS.map(kw => `"${kw}"`).join(' OR ');
         const response = await client.v2.search(query, {
-            max_results: 20,
-            'tweet.fields': ['created_at', 'author_id', 'lang'],
+            max_results: 50,                               // fetch more, discard noise
+            'tweet.fields': ['created_at', 'author_id', 'lang', 'public_metrics'],
         });
 
         if (!response.data || !response.data.data) return [];
 
-        console.log(`✓ Twitter: ${response.data.data.length} tweets fetched`);
-        return response.data.data.map(tweet => ({
+        const filtered = response.data.data.filter(tweet => !isLowQuality(tweet));
+        console.log(`✓ Twitter: ${response.data.data.length} fetched → ${filtered.length} after quality filter`);
+
+        return filtered.map(tweet => ({
             source:        'Twitter',
             title:         tweet.text.slice(0, 200),
             content:       tweet.text,
@@ -36,7 +53,12 @@ async function searchFinanceNews() {
             category:      'turkish_market',
             event_type:    'social_media',
             language:      tweet.lang === 'tr' ? 'tr' : 'en',
-            raw_data:      { tweet_id: tweet.id, author_id: tweet.author_id },
+            raw_data:      {
+                tweet_id:        tweet.id,
+                author_id:       tweet.author_id,
+                like_count:      tweet.public_metrics?.like_count ?? 0,
+                retweet_count:   tweet.public_metrics?.retweet_count ?? 0,
+            },
         }));
     } catch (error) {
         console.error('✗ Twitter collector error:', error.message);

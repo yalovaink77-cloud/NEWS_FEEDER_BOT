@@ -8,6 +8,11 @@ const Parser  = require('rss-parser');
 // tcmb.gov.tr press-release page is a JavaScript-rendered IBM WPS portal;
 // static HTML contains no news items. Google News RSS is used instead and
 // provides real-time aggregated TCMB/CBRT headlines from Turkish media.
+//
+// ⚠️  source_weight is intentionally kept LOW (0.25) because this is a
+// secondary aggregator, NOT an official TCMB press release endpoint.
+// Giving it 0.55 would cause the confidence scorer to treat aggregated
+// third-party coverage as if it were a direct central bank announcement.
 // ---------------------------------------------------------------------------
 async function scrapeTCMB() {
     const rssParser = new Parser({ timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0' } });
@@ -16,12 +21,12 @@ async function scrapeTCMB() {
             'https://news.google.com/rss/search?q=TCMB+merkez+bankasi+faiz&hl=tr&gl=TR&ceid=TR:tr',
         );
         const articles = feed.items.map(item => ({
-            source:        'TCMB',
+            source:        'TCMB via Google News',
             title:         item.title || '',
             content:       item.contentSnippet || '',
             url:           item.link || '',
             published_at:  item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
-            source_weight: 0.55,
+            source_weight: 0.25,
             category:      'central_bank',
             event_type:    detectCBEventType(item.title || ''),
             language:      'tr',
@@ -56,12 +61,15 @@ async function scrapeBloombergHT() {
             // Only news article slugs — filter out nav/tag/author links
             if (title.length < 10 || !href.match(/\/[^/]+-\d{6,}$/) || seen.has(href)) return;
             seen.add(href);
+            // published_at is unknown for scraped links (no timestamp in HTML);
+            // mark as null so the normalizer falls back to now() only once,
+            // and dedup by URL prevents re-insertion on the next cron tick.
             articles.push({
                 source:        'Bloomberg HT',
                 title,
                 content:       '',
                 url:           href.startsWith('http') ? href : `https://www.bloomberght.com${href}`,
-                published_at:  new Date().toISOString(),
+                published_at:  null,
                 source_weight: 0.20,
                 category:      'turkish_market',
                 event_type:    'news',
