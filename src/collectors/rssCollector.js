@@ -1,5 +1,8 @@
-const Parser = require('rss-parser');
-const parser = new Parser();
+const { createRssParser } = require('./_rssClient');
+
+// Ortak factory tarayıcı User-Agent'ı + timeout sağlar; çoğu Türk haber sitesi
+// varsayılan rss-parser UA'sını 403 ile blokluyordu (sessiz 0-haber sorunu).
+const parser = createRssParser();
 
 // Turkish-focused market feeds — highest weight for BIST analysis
 // Note: KAP (kap.org.tr) RSS endpoint returns 404 as of 2025; replaced with

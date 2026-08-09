@@ -1,5 +1,5 @@
-const Parser = require('rss-parser');
-const parser = new Parser();
+const { createRssParser } = require('./_rssClient');
+const parser = createRssParser();
 
 // NOTE: NYT World and BBC World are intentionally excluded here — they are
 // already collected by geopoliticalCollector.js. Duplicating them causes the

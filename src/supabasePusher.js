@@ -6,11 +6,19 @@ const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl  = process.env.SUPABASE_URL;
 const supabaseKey  = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-    throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env');
+// Lazy init: modül require edildiğinde değil, ilk kullanımda kontrol et.
+// Önceden module-load anında throw ediliyordu; bu, supabasePusher'ı import eden
+// her şeyi (index.js, testler, araçlar) env yoksa çökertiyordu.
+let supabase = null;
+function getClient() {
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env');
+    }
+    if (!supabase) {
+        supabase = createClient(supabaseUrl, supabaseKey);
+    }
+    return supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * Push a normalized article to Supabase.
@@ -22,7 +30,7 @@ async function pushNews(article) {
     const dedupeField = article.url ? 'url' : 'title';
     const dedupeValue = article.url || article.title;
 
-    const { data: existing, error: selectError } = await supabase
+    const { data: existing, error: selectError } = await getClient()
         .from('news')
         .select('id')
         .eq(dedupeField, dedupeValue)
@@ -37,11 +45,17 @@ async function pushNews(article) {
         return false; // duplicate
     }
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await getClient()
         .from('news')
         .insert([article]);
 
     if (insertError) {
+        // 23505 = unique_violation. SELECT ile INSERT arasında başka bir cycle/instance
+        // aynı URL'yi eklemiş olabilir (url üzerinde UNIQUE index var). Bu bir hata değil,
+        // duplicate demektir → sessizce geç.
+        if (insertError.code === '23505') {
+            return false;
+        }
         console.error('Error inserting article:', insertError.message, '|', article.title);
         return false;
     }

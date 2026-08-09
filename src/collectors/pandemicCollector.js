@@ -1,5 +1,5 @@
-const Parser = require('rss-parser');
-const parser = new Parser();
+const { createRssParser } = require('./_rssClient');
+const parser = createRssParser();
 
 // Verified working as of 2026-03-25. WHO DON=404, CDC=broken XML, Reuters DNS dead; replaced.
 const PANDEMIC_FEEDS = [

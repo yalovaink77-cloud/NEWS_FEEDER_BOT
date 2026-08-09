@@ -1,5 +1,5 @@
-const Parser = require('rss-parser');
-const parser = new Parser();
+const { createRssParser } = require('./_rssClient');
+const parser = createRssParser();
 
 // Central bank RSS feeds — critical weight for BIST (CBRT decisions move Turkish markets most)
 // Verified working as of 2026-03-25. ECB/CBRT/BoJ RSS endpoints are 404; replaced with alternatives.

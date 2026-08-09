@@ -1,5 +1,5 @@
-const Parser = require('rss-parser');
-const parser = new Parser();
+const { createRssParser } = require('./_rssClient');
+const parser = createRssParser();
 
 // Verified working as of 2026-03-25. Reuters DNS dead, Guardian Politics(/international)=404; replaced.
 const POLITICAL_FEEDS = [
